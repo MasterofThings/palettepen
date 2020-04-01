@@ -72,6 +72,8 @@ nemo = floatify(nemo)
 hsv_nemo = cv2.cvtColor(nemo, cv2.COLOR_RGB2HSV) #last rendering of nemo is in RGB 
 plt.imshow(hsv_nemo) #now it is in HSV 
 plt.show()
+
+
 #%%
 
 #############
@@ -93,7 +95,7 @@ def rgb2hsv(r, g, b):
     return hsv 
 
 rgb2hsv(255, 0, 0)
-# lab(0, 1, 1) # correct
+# hsv(0, 1, 1) # correct
 
 
 def hsv2rgb(h, s, v): 
@@ -139,7 +141,7 @@ def lab2hsv(l, a, b):
     return hsv 
 
 lab2hsv(50, -50, 20)
-# rgb(155, 1, .5)  # correct
+# hsv(155, 1, .5)  # correct
 
 
 # LAB-LCH  
@@ -148,15 +150,15 @@ def lab2lch(l, a, b):
     lch = convert_color(lab, LCHabColor)
     return lch 
 
-lab2lch(255, 0, 0)
-# lab(53, 80, 67) 
+lab2lch(50, 20, 0)
+# lch(50, 20, 360) #correct 
 
 def lch2lab(l, c, h): 
     lch = LCHabColor(l, c, h)
     lab = convert_color(lch, LabColor)
     return lab 
 
-lch2lab(50, -50, 20)
+lch2lab(80, 40, 0)
 # rgb(0, 139, 82) 
 
 
@@ -227,7 +229,7 @@ lst2 = []
 lst3 = ['red', 'orange', 'yellow', 'green-yellow', 'green', 'green-blue', 'cyan', 'blue-yellow','blue','purple','magenta','red-yellow']
 
 for i in range(len(lst1)): 
-    lst2.append(convert_rgbhsv(lst1[i], 'RGB', 'HSV'))
+    lst2.append(rgb2hsv(lst1[i]))
     
 df = pd.DataFrame()
 df['RGB'] = lst1
@@ -244,7 +246,7 @@ df.to_csv('rgbhsv_12.csv')
 lablch_twelve = dict()
 for i in np.linspace(0,360,num=12, endpoint=False): 
     lch_colors = (50,100,i)
-    lab_colors = convert_lablch(lch_colors, "LCH", "LAB")
+    lab_colors = lab2lch(lch_colors)
     lablch_twelve[lch_colors] = lab_colors
 
 # build pd frame with lab lch for 12 30°-step hues
@@ -259,7 +261,7 @@ for i in lablch_twelve.items():
  
 lst3 = []
 for i in range(len(lst2)): 
-    lst3.append(convert_rgblab(lst2[i], 'LAB', 'RGB'))
+    lst3.append(rgb2lab(lst2[i]))
 
 lst4 = ['fuchsia', 'red', 'terracotta','olive', 'kelly','leaf', 'teal','atoll', 'azure','blue','purple','lilac']
 
@@ -277,12 +279,12 @@ os.chdir(r'D:\thesis\code\pd12hues')
 lablch_12.to_csv('lablchrgb_12.csv')
 lablch_12.to_csv('lablchrgb_12_handcorrected.csv')
 
-
+#%%
 ########################################
 ### Color Categories in Color Space ###
 ########################################
 
-# define epicentre of 6 color categories in color space
+# define 6 color categories as epicentres in color space
 
 # basic 6 colors (by Itten p. 22)
 basic_colors = ['red', 'orange', 'yellow', 'green', 'blue', 'violet']
@@ -292,7 +294,7 @@ basic_colors_hsv  = []
 basic_colors_lch  = []
 
 for i in range(len(basic_colors_rgb)):
-    basic_colors_hsv.append(convert_rgbhsv(basic_colors_rgb[i], 'RGB', 'HSV'))
+    basic_colors_hsv.append(rgb2hsv(basic_colors_rgb[i]))
 
 df = pd.DataFrame()
 df['RGB'] = lst1
