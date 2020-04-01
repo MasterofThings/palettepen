@@ -72,83 +72,95 @@ nemo = floatify(nemo)
 hsv_nemo = cv2.cvtColor(nemo, cv2.COLOR_RGB2HSV) #last rendering of nemo is in RGB 
 plt.imshow(hsv_nemo) #now it is in HSV 
 plt.show()
+#%%
 
 #############
 ### COLOR ###   
 #############
 # Color Value Conversion 
 
-# define colors 
-light_white = (244,239,208) # image correct
-dark_white = (191,186,159)
+# load modules 
+from colormath.color_objects import LabColor, LCHabColor, LCHuvColor, LuvColor, xyYColor, XYZColor, HSLColor, HSVColor, sRGBColor, CMYKColor
+from colormath.color_conversions import convert_color
 
-light_white = (31,54,55) # image correct
-dark_white = (169,54,55)
-
-# RGB to HSV 
-#light_white = np.array([[[244,239,208]]], dtype='uint8') # needs three brackets around color otherwise invalid number of channels in input image
-def floatify(img_uint8): 
-    img_floats = img_uint8.astype(np.float32) 
-    img_floats = img_floats / 255 
-    return img_floats  # RGB to HSV: first step is to divide each channel with 255 to change the range of color from 0-255 to 0-1
-
-light_white = np.array([[[31,54,55]]], dtype=np.uint8)
-dark_white = np.uint8([[[230,224,192]]])
-light_white = floatify(light_white)
-
-hsv_light_white = cv2.cvtColor(light_white, cv2.COLOR_RGB2HSV)
-print(hsv_light_white)
-# [[[ 51.666622    0.14754096  0.95686275]]] +- hue value 20 upper limit [[[ 70.666622    0.14754096  0.95686275]]] lower limit [[[ 31.666622    0.14754096  0.95686275]]] 
+# control: https://www.nixsensor.com/free-color-converter/
 
 
+# RGB-HSV 
+def rgb2hsv(r, g, b): 
+    rgb = sRGBColor(r, g, b, is_upscaled=True)
+    hsv = convert_color(rgb, HSVColor)
+    return hsv 
 
-# HSV to RGB   #TODO: conversion does not work
-def intify(img_f):
-    img_f = img_f * 255
-    img_f = np.round(img_f)
-    im_ints = img_f.astype(np.uint8)
-    return im_ints
-
-# define colors
-hsv_light_white = np.array([[[51.666622  ,  0.14754096,  0.95686275]]], dtype=np.float32)
-# hsv_dark_white = cv2.cvtColor(dark_white, cv2.COLOR_RGB2HSV)
-# hsv_light_white = intify(hsv_light_white)
-rgb_light_white = cv2.cvtColor(hsv_light_white, cv2.COLOR_HSV2RGB)
-print(rgb_light_white)
-# upper : [[[225 244 208]]]; lower : [[[244 215 208]]]
+rgb2hsv(255, 0, 0)
+# lab(0, 1, 1) # correct
 
 
-#%%
-# TODO: HSV to RGB 
-# RGB to HSV *** HSV to RGB  
-def convert_rgbhsv(color, source, dest): 
-    """  Convert one specific color 
-    - from RGB to HSV 
-    - from HSV to RGB
-    Arguments: 
-        color -- list, original color 
-        source -- str, original color space
-        dest -- str, target color space
-    Returns:
-        color -- list, target color """
-   
-    if source == "RGB" and dest == "HSV": 
-        color = np.asarray([[color]], dtype='uint8') # from list to np array of uint8 
-        color = color.astype(np.float32)  / 255  # from uint8 to float to 0-1 scale (preprocess for HSV compatibility) 
-        color = cv2.cvtColor(color, cv2.COLOR_RGB2HSV) # data input needs to be in image shape with three brackets
-        h,s,v = color.tolist()[0][0]
-        h = int(round(h,0))
-        s = int(round(s,0))
-        v = int(round(v,0))
-        color = h,s,v 
-    elif source == "HSV" and dest == "RGB": 
-        pass 
-        #print(cv2.cvtColor(color, cv2.COLOR_RGB2HSV))
-        #print(cv2.cvtColor(color, cv2.COLOR_HSV2RGB))
-    return color 
+def hsv2rgb(h, s, v): 
+    hsv = HSVColor(h, s, v)
+    rgb = convert_color(hsv, sRGBColor)
+    rgb = rgb.get_upscaled_value_tuple()
+    return rgb 
 
-light_white = (244,239,208)
-convert_rgbhsv(light_white, 'RGB', 'HSV')
+hsv2rgb(50, .20, .80)
+# rgb(204, 197, 163) #correct
+
+
+# RGB-LAB 
+def rgb2lab(r, g, b): 
+    rgb = sRGBColor(r, g, b, is_upscaled=True)
+    lab = convert_color(rgb, LabColor)
+    return lab 
+
+rgb2lab(204, 197, 163)
+# lab(79, -3.1, 17.96) # correct
+
+def lab2rgb(l, a, b): 
+    lab = LabColor(l, a, b)
+    rgb = convert_color(lab, sRGBColor)
+    rgb = rgb.get_upscaled_value_tuple()
+    return rgb 
+
+lab2rgb(50, -50, 20)
+# rgb(0, 139, 82) # correct 
+
+# HSV-LAB 
+def hsv2lab(h, s, v): 
+    hsv = HSVColor(h, s, v)
+    lab = convert_color(hsv, LabColor)
+    return lab 
+
+hsv2lab(50, .20, .80)
+# lab(79, -3.1, 17.96) # correct
+
+def lab2hsv(l, a, b): 
+    lab = LabColor(l, a, b)
+    hsv = convert_color(lab, HSVColor)
+    return hsv 
+
+lab2hsv(50, -50, 20)
+# rgb(155, 1, .5)  # correct
+
+
+# LAB-LCH  
+def lab2lch(l, a, b): 
+    lab = LabColor(l, a, b)
+    lch = convert_color(lab, LCHabColor)
+    return lch 
+
+lab2lch(255, 0, 0)
+# lab(53, 80, 67) 
+
+def lch2lab(l, c, h): 
+    lch = LCHabColor(l, c, h)
+    lab = convert_color(lch, LabColor)
+    return lab 
+
+lch2lab(50, -50, 20)
+# rgb(0, 139, 82) 
+
+
+
 
 #%%
 
@@ -192,167 +204,10 @@ convert_hsv8_32bit(dark_orange, '32-bit', '8-bit')
 # (14, 64, 209)
 
 
-#%%
-# TODO: debug 
-# RGB to L*ab *** L*ab to RGB  
-def convert_rgblab(color, source, dest): 
-    """  Convert one specific color 
-    - from RGB to HSV 
-    - from HSV to RGB
-    Arguments: 
-        color -- list, original color 
-        source -- str, original color space
-        dest -- str, target color space
-    Returns:
-        color -- list, target color """
-    if source == "RGB" and dest == "LAB": 
-        r,g,b = color 
-        #  needs CIE XYZ vals first : 
-        X = r * 0.412453   + g *0.357580+ b * 0.180423
-        Y = r * 0.212671 + g *  0.715160 + b *  0.072169
-        Z = r *  0.019334 + g * 0.119193 + b *  0.950227
-        
-        Xn = 95.047 #* Reference-X=  95.047  
-        Yn = 100.000#* Reference-Y= 100.000
-        Zn = 108.883#* Reference-Z= 108.883 
-        delta = 0.008856
-        #  tristimulus values of the reference white
-        
-        if (Y/Yn) > delta:
-            l = 116* (Y/Yn)**(1/3) - 16
-        else: 
-            l = 116* ((Y/Yn)/3*delta**2 + (4/29)) - 16
-        if (X/Xn) > delta and (Y/Yn) > delta:
-            a = 500* ((X/Xn)**(1/3) - (Y/Yn)**(1/3))
-        else:
-            a = 500* (((X/Xn)/3*delta**2 + (4/29)) - ((Y/Yn)/3*delta**2 + (4/29)))        
-        if (Y/Yn) > delta and (Z/Zn) > delta:
-            b = 200* ((Y/Yn)**(1/3) - (Z/Zn)**(1/3))
-        else: 
-            b = 200* (((Y/Yn)/3*delta**2 + (4/29)) - ((Z/Zn)/3*delta**2 + (4/29)))   
-        
-        # l = (116* var_Y) - 16
-        # a = var_X * 500 - var_Y
-        # b = var_Z * 200 - var_Y
-        
-        color = l, a, b  
-        return color
-     #  pass 
-        
-    elif source == "LAB" and dest == "RGB": 
-        l,a,b = color
-        var_Y = ( l + 16 ) / 116
-        var_X = a / 500 + var_Y
-        var_Z = var_Y - b / 200
-        
-        if var_Y**3  > 0.008856:
-            var_Y = var_Y**3
-        else: 
-            var_Y = ( var_Y - 16 / 116 ) / 7.787
-        if var_X**3  > 0.008856: 
-            var_X = var_X**3 
-        else: 
-            var_X = ( var_X - 16 / 116 ) / 7.787
-        if var_Z**3  > 0.008856:
-            var_Z = var_Z**3
-        else: 
-            var_Z = ( var_Z - 16 / 116 ) / 7.787
-        # Reference-X, Y and Z refer to specific illuminants and observers   
-        # Observer= 2°, Illuminant= D65
-        var_X = 95.047 * var_X / 100 #* Reference-X=  95.047  
-        var_Y = 100.000 * var_Y / 100#* Reference-Y= 100.000
-        var_Z = 108.883 * var_Z / 100#* Reference-Z= 108.883 
- 
-        
-        var_R = var_X *  3.2406 + var_Y * -1.5372 + var_Z * -0.4986
-        var_G = var_X * -0.9689 + var_Y *  1.8758 + var_Z *  0.0415
-        var_B = var_X *  0.0557 + var_Y * -0.2040 + var_Z *  1.0570
-        if var_R > 0.0031308:
-            var_R = 1.055 * var_R ** ( 1 / 2.4 ) - 0.055;
-        else:
-            var_R = 12.92 * var_R;
-        if var_G > 0.0031308:
-            var_G = 1.055 * var_G ** ( 1 / 2.4 ) - 0.055;
-        else:
-            var_G = 12.92 * var_G;
-        if var_B > 0.0031308:
-            var_B = 1.055 * var_B ** ( 1 / 2.4 ) - 0.055;
-        else:
-            var_B = 12.92 * var_B;
-
-        R = var_R #max(int(round(var_R,0)) * 255, 0)
-        G = var_G #max(int(round(var_G,0)) * 255, 0)
-        B = var_B #int(round(var_B * 255,0))
-        color = R, G, B
-
-    return color 
-
-# color = (50, -50, 87)
-# #color = (50, 100, 0)
-# convert_rgblab(color, 'LAB', 'RGB')
-# #rgb(255, 0, 123) # correct 
-
-# correct rgbs 
-#(250,0,123)
-#(247,0,43)
-#(204,75,0)
-#(140,117,0)
-#(31,138,0)
-#(0,148,0)
-#(0,151,116)
-#(0,151,203)
-#(0,145,255)
-#(0,127,255)
-#(123,88,255)
-#(220,0,207)
-
-color = (255, 0, 123)
-convert_rgblab(color, 'RGB', 'LAB')
-#color = (50, -50, 87)
 
 
-#%%
 
-# HSV: LAB to LCH *** LCH to LAB 
-import math 
-def convert_lablch(color, source, dest): 
-    # converter: ccc.orgfree.com/ # derived formula
-    """  Convert one specific color 
-    - from CIE-L*ab to CIE-L*ch 
-    - from CIE-L*ch to CIE-L*ab
-    - CIE-L*ab => luminence =[0,100] from black to white, a = [-100, +100] or [-128, +128] from green to red, b = [-100, +100] or [-128, +128] from blue to yellow 
-    - CIE-L*ch => luminence =[0,100] from black to white, c = [0, +100] from green to red, h = [0, 360] from blue to yellow 
-    Arguments: 
-        color -- list, original color 
-        source -- str, original color space
-        dest -- str, target color space
-    Returns:
-        color -- list, target color """
-   
-    if source == "LAB" and dest == "LCH": 
-        l,a,b = color #
-        c = int(round(math.sqrt(a**2 + b**2), 0)) #chroma
-        if math.degrees(math.atan2(b,a)) >= 0: 
-            h = int(round(math.degrees(math.atan2(b,a)),0)) #hue 
-        else: 
-            h = int(round(math.degrees(math.atan2(b,a)) + 360 ,0)) 
-        color = l,c,h 
-    elif source == "LCH" and dest == "LAB": 
-        l,c,h = color
-        a = int(round(c* math.cos((h*math.pi/180)),0))
-        b = int(round(c* math.sin((h*math.pi/180)),0))
-        color = l,a,b      
-    return color 
 
-# color = (100,100,100) # luminence in lch is not 100 on colormine.org although lab has luminence 100 
-# convert_lablch(color, "LAB", "LCH")
-#(50, 71, 45) #correct 
-#(100, 141, 45) #correct 
-
-color = (50,100,0)
-convert_lablch(color, "LCH", "LAB")
-# color = (50,32,38) #correct 
-# color = (20, 39, 7) #correct 
 
 
 #%%
