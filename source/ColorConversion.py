@@ -102,20 +102,20 @@ print(hsv_light_white)
 
 
 
-# HSV to RGB   #TODO: conversion does not work  
-def intify(img_f): 
+# HSV to RGB   #TODO: conversion does not work
+def intify(img_f):
     img_f = img_f * 255
     img_f = np.round(img_f)
     im_ints = img_f.astype(np.uint8)
-    return im_ints 
+    return im_ints
 
-# define colors 
+# define colors
 hsv_light_white = np.array([[[51.666622  ,  0.14754096,  0.95686275]]], dtype=np.float32)
 # hsv_dark_white = cv2.cvtColor(dark_white, cv2.COLOR_RGB2HSV)
-# hsv_light_white = intify(hsv_light_white) 
+# hsv_light_white = intify(hsv_light_white)
 rgb_light_white = cv2.cvtColor(hsv_light_white, cv2.COLOR_HSV2RGB)
 print(rgb_light_white)
-# upper : [[[225 244 208]]]; lower : [[[244 215 208]]] 
+# upper : [[[225 244 208]]]; lower : [[[244 215 208]]]
 
 
 #%%
@@ -205,10 +205,38 @@ def convert_rgblab(color, source, dest):
         dest -- str, target color space
     Returns:
         color -- list, target color """
-   
     if source == "RGB" and dest == "LAB": 
         r,g,b = color 
-      #  if needs CIE XYZ vals first : 
+        #  needs CIE XYZ vals first : 
+        X = r * 0.412453   + g *0.357580+ b * 0.180423
+        Y = r * 0.212671 + g *  0.715160 + b *  0.072169
+        Z = r *  0.019334 + g * 0.119193 + b *  0.950227
+        
+        Xn = 95.047 #* Reference-X=  95.047  
+        Yn = 100.000#* Reference-Y= 100.000
+        Zn = 108.883#* Reference-Z= 108.883 
+        delta = 0.008856
+        #  tristimulus values of the reference white
+        
+        if (Y/Yn) > delta:
+            l = 116* (Y/Yn)**(1/3) - 16
+        else: 
+            l = 116* ((Y/Yn)/3*delta**2 + (4/29)) - 16
+        if (X/Xn) > delta and (Y/Yn) > delta:
+            a = 500* ((X/Xn)**(1/3) - (Y/Yn)**(1/3))
+        else:
+            a = 500* (((X/Xn)/3*delta**2 + (4/29)) - ((Y/Yn)/3*delta**2 + (4/29)))        
+        if (Y/Yn) > delta and (Z/Zn) > delta:
+            b = 200* ((Y/Yn)**(1/3) - (Z/Zn)**(1/3))
+        else: 
+            b = 200* (((Y/Yn)/3*delta**2 + (4/29)) - ((Z/Zn)/3*delta**2 + (4/29)))   
+        
+        # l = (116* var_Y) - 16
+        # a = var_X * 500 - var_Y
+        # b = var_Z * 200 - var_Y
+        
+        color = l, a, b  
+        return color
      #  pass 
         
     elif source == "LAB" and dest == "RGB": 
@@ -216,6 +244,7 @@ def convert_rgblab(color, source, dest):
         var_Y = ( l + 16 ) / 116
         var_X = a / 500 + var_Y
         var_Z = var_Y - b / 200
+        
         if var_Y**3  > 0.008856:
             var_Y = var_Y**3
         else: 
@@ -230,13 +259,10 @@ def convert_rgblab(color, source, dest):
             var_Z = ( var_Z - 16 / 116 ) / 7.787
         # Reference-X, Y and Z refer to specific illuminants and observers   
         # Observer= 2°, Illuminant= D65
-        X = 95.047 * var_X #* Reference-X=  95.047  
-        Y = 100.000 * var_Y #* Reference-Y= 100.000
-        Z = 108.883 * var_Z #* Reference-Z= 108.883 
+        var_X = 95.047 * var_X / 100 #* Reference-X=  95.047  
+        var_Y = 100.000 * var_Y / 100#* Reference-Y= 100.000
+        var_Z = 108.883 * var_Z / 100#* Reference-Z= 108.883 
  
-        var_X = X / 100
-        var_Y = Y / 100
-        var_Z = Z / 100
         
         var_R = var_X *  3.2406 + var_Y * -1.5372 + var_Z * -0.4986
         var_G = var_X * -0.9689 + var_Y *  1.8758 + var_Z *  0.0415
@@ -261,10 +287,10 @@ def convert_rgblab(color, source, dest):
 
     return color 
 
-color = (50, -50, 87)
-#color = (50, 100, 0)
-convert_rgblab(color, 'LAB', 'RGB')[0]
-#rgb(255, 0, 123) # correct 
+# color = (50, -50, 87)
+# #color = (50, 100, 0)
+# convert_rgblab(color, 'LAB', 'RGB')
+# #rgb(255, 0, 123) # correct 
 
 # correct rgbs 
 #(250,0,123)
@@ -280,7 +306,9 @@ convert_rgblab(color, 'LAB', 'RGB')[0]
 #(123,88,255)
 #(220,0,207)
 
-
+color = (255, 0, 123)
+convert_rgblab(color, 'RGB', 'LAB')
+#color = (50, -50, 87)
 
 
 #%%
@@ -393,3 +421,28 @@ lablch_12= pd.read_csv('lablchrgb_12_handcorrected.csv')
 os.chdir(r'D:\thesis\code\pd12hues')
 lablch_12.to_csv('lablchrgb_12.csv')
 lablch_12.to_csv('lablchrgb_12_handcorrected.csv')
+
+
+########################################
+### Color Categories in Color Space ###
+########################################
+
+# define epicentre of 6 color categories in color space
+
+# basic 6 colors (by Itten p. 22)
+basic_colors = ['red', 'orange', 'yellow', 'green', 'blue', 'violet']
+basic_colors_rgb  = [(255, 0, 0), (255, 128, 0), (255, 255, 0),  (0, 255, 0),
+       (0, 0, 255), (128, 0, 255)]
+basic_colors_hsv  = []
+basic_colors_lch  = []
+
+for i in range(len(basic_colors_rgb)):
+    basic_colors_hsv.append(convert_rgbhsv(basic_colors_rgb[i], 'RGB', 'HSV'))
+
+df = pd.DataFrame()
+df['RGB'] = lst1
+df['HSV'] = lst2
+df['name'] = lst3
+
+os.chdir(r'D:\thesis\code\pd12hues')
+df.to_csv('rgbhsv_12.csv')
