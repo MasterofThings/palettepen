@@ -1,0 +1,2 @@
+email = "beta-tester@test.uzh.ch"
+pw = "vian-beta-tester20"
